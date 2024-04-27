@@ -101,10 +101,13 @@ struct chat_photo_t {
     string_t big_file_unique_id;   // Unique file identifier of big (640x640) chat photo, which is supposed to be the same over time and for different bots. Can't be used to download or reuse the file.
 };
 
-// This object contains information about the chat whose identifier was shared with the bot using a KeyboardButtonRequestChat button.
+// This object contains information about a chat that was shared with the bot using a KeyboardButtonRequestChat button.
 struct chat_shared_t {
-    integer_t request_id; // Identifier of the request
-    integer_t chat_id;    // Identifier of the shared chat. This number may have more than 32 significant bits and some programming languages may have difficulty/silent defects in interpreting it. But it has at most 52 significant bits, so a 64-bit integer or double-precision float type are safe for storing this identifier. The bot may not have access to the chat and could be unable to use this identifier, unless the chat is already known to the bot by some other means.
+    integer_t                         request_id; // Identifier of the request
+    integer_t                         chat_id;    // Identifier of the shared chat. This number may have more than 32 significant bits and some programming languages may have difficulty/silent defects in interpreting it. But it has at most 52 significant bits, so a 64-bit integer or double-precision float type are safe for storing this identifier. The bot may not have access to the chat and could be unable to use this identifier, unless the chat is already known to the bot by some other means.
+    optional_t<string_t>              title;      // Optional. Title of the chat, if the title was requested by the bot.
+    optional_t<string_t>              username;   // Optional. Username of the chat, if the username was requested by the bot and available.
+    optional_t<array_t<photo_size_t>> photo;      // Optional. Available sizes of the chat photo, if the photo was requested by the bot
 };
 
 // This object represents a phone contact.
@@ -209,6 +212,7 @@ struct input_file_t {
 // This object describes a sticker to be added to a sticker set.
 struct input_sticker_t {
     variant_t<input_file_t, string_t> sticker;       // The added sticker. Pass a file_id as a String to send a file that already exists on the Telegram servers, pass an HTTP URL as a String for Telegram to get a file from the Internet, upload a new one using multipart/form-data, or pass “attach://<file_attach_name>” to upload a new one using multipart/form-data under <file_attach_name> name. Animated and video stickers can't be uploaded via HTTP URL. More information on Sending Files »
+    string_t                          format;        // Format of the added sticker, must be one of “static” for a .WEBP or .PNG image, “animated” for a .TGS animation, “video” for a WEBM video
     array_t<string_t>                 emoji_list;    // List of 1-20 emoji associated with the sticker
     optional_t<mask_position_t>       mask_position; // Optional. Position where the mask should be placed on faces. For “mask” stickers only.
     optional_t<array_t<string_t>>     keywords;      // Optional. List of 0-20 search keywords for the sticker with total length of up to 64 characters. For “regular” and “custom_emoji” stickers only.
@@ -228,7 +232,7 @@ struct keyboard_button_poll_type_t {
     optional_t<string_t> type; // Optional. If quiz is passed, the user will be allowed to create only polls in the quiz mode. If regular is passed, only regular polls will be allowed. Otherwise, the user will be allowed to create a poll of any type.
 };
 
-// This object defines the criteria used to request a suitable chat. The identifier of the selected chat will be shared with the bot when the corresponding button is pressed. More about requesting chats »
+// This object defines the criteria used to request a suitable chat. Information about the selected chat will be shared with the bot when the corresponding button is pressed. The bot will be granted requested rights in the сhat if appropriate More about requesting chats »
 struct keyboard_button_request_chat_t {
     integer_t                               request_id;                // Signed 32-bit identifier of the request, which will be received back in the ChatShared object. Must be unique within the message
     boolean_t                               chat_is_channel;           // Pass True to request a channel chat, pass False to request a group or a supergroup chat.
@@ -238,14 +242,20 @@ struct keyboard_button_request_chat_t {
     optional_t<chat_administrator_rights_t> user_administrator_rights; // Optional. A JSON-serialized object listing the required administrator rights of the user in the chat. The rights must be a superset of bot_administrator_rights. If not specified, no additional restrictions are applied.
     optional_t<chat_administrator_rights_t> bot_administrator_rights;  // Optional. A JSON-serialized object listing the required administrator rights of the bot in the chat. The rights must be a subset of user_administrator_rights. If not specified, no additional restrictions are applied.
     optional_t<boolean_t>                   bot_is_member;             // Optional. Pass True to request a chat with the bot as a member. Otherwise, no additional restrictions are applied.
+    optional_t<boolean_t>                   request_title;             // Optional. Pass True to request the chat's title
+    optional_t<boolean_t>                   request_username;          // Optional. Pass True to request the chat's username
+    optional_t<boolean_t>                   request_photo;             // Optional. Pass True to request the chat's photo
 };
 
-// This object defines the criteria used to request suitable users. The identifiers of the selected users will be shared with the bot when the corresponding button is pressed. More about requesting users »
+// This object defines the criteria used to request suitable users. Information about the selected users will be shared with the bot when the corresponding button is pressed. More about requesting users »
 struct keyboard_button_request_users_t {
-    integer_t             request_id;      // Signed 32-bit identifier of the request that will be received back in the UsersShared object. Must be unique within the message
-    optional_t<boolean_t> user_is_bot;     // Optional. Pass True to request bots, pass False to request regular users. If not specified, no additional restrictions are applied.
-    optional_t<boolean_t> user_is_premium; // Optional. Pass True to request premium users, pass False to request non-premium users. If not specified, no additional restrictions are applied.
-    optional_t<integer_t> max_quantity;    // Optional. The maximum number of users to be selected; 1-10. Defaults to 1.
+    integer_t             request_id;       // Signed 32-bit identifier of the request that will be received back in the UsersShared object. Must be unique within the message
+    optional_t<boolean_t> user_is_bot;      // Optional. Pass True to request bots, pass False to request regular users. If not specified, no additional restrictions are applied.
+    optional_t<boolean_t> user_is_premium;  // Optional. Pass True to request premium users, pass False to request non-premium users. If not specified, no additional restrictions are applied.
+    optional_t<integer_t> max_quantity;     // Optional. The maximum number of users to be selected; 1-10. Defaults to 1.
+    optional_t<boolean_t> request_name;     // Optional. Pass True to request the users' first and last name
+    optional_t<boolean_t> request_username; // Optional. Pass True to request the users' username
+    optional_t<boolean_t> request_photo;    // Optional. Pass True to request the users' photo
 };
 
 // Describes the options used for link preview generation.
@@ -327,8 +337,8 @@ struct reply_keyboard_remove_t {
 // Describes reply parameters for the message that is being sent.
 struct reply_parameters_t {
     integer_t                                  message_id;                  // Identifier of the message that will be replied to in the current chat, or in the chat chat_id if it is specified
-    optional_t<variant_t<integer_t, string_t>> chat_id;                     // Optional. If the message to be replied to is from a different chat, unique identifier for the chat or username of the channel (in the format @channelusername)
-    optional_t<boolean_t>                      allow_sending_without_reply; // Optional. Pass True if the message should be sent even if the specified message to be replied to is not found; can be used only for replies in the same chat and forum topic.
+    optional_t<variant_t<integer_t, string_t>> chat_id;                     // Optional. If the message to be replied to is from a different chat, unique identifier for the chat or username of the channel (in the format @channelusername). Not supported for messages sent on behalf of a business account.
+    optional_t<boolean_t>                      allow_sending_without_reply; // Optional. Pass True if the message should be sent even if the specified message to be replied to is not found. Always False for replies in another chat or forum topic. Always True for messages sent on behalf of a business account.
     optional_t<string_t>                       quote;                       // Optional. Quoted part of the message to be replied to; 0-1024 characters after entities parsing. The quote must be an exact substring of the message to be replied to, including bold, italic, underline, strikethrough, spoiler, and custom_emoji entities. The message will fail to send if the quote isn't found in the original message.
     optional_t<string_t>                       quote_parse_mode;            // Optional. Mode for parsing entities in the quote. See formatting options for more details.
     optional_t<array_t<message_entity_t>>      quote_entities;              // Optional. A JSON-serialized list of special entities that appear in the quote. It can be specified instead of quote_parse_mode.
@@ -376,31 +386,29 @@ struct text_quote_t {
 
 // This object represents an incoming update. At most one of the optional parameters can be present in any given update.
 struct update_t {
-    integer_t                                    update_id;              // The update's unique identifier. Update identifiers start from a certain positive number and increase sequentially. This identifier becomes especially handy if you're using webhooks, since it allows you to ignore repeated updates or to restore the correct update sequence, should they get out of order. If there are no new updates for at least a week, then identifier of the next update will be chosen randomly instead of sequentially.
-    optional_t<message_t>                        message;                // Optional. New incoming message of any kind - text, photo, sticker, etc.
-    optional_t<message_t>                        edited_message;         // Optional. New version of a message that is known to the bot and was edited. This update may at times be triggered by changes to message fields that are either unavailable or not actively used by your bot.
-    optional_t<message_t>                        channel_post;           // Optional. New incoming channel post of any kind - text, photo, sticker, etc.
-    optional_t<message_t>                        edited_channel_post;    // Optional. New version of a channel post that is known to the bot and was edited. This update may at times be triggered by changes to message fields that are either unavailable or not actively used by your bot.
-    optional_t<message_reaction_updated_t>       message_reaction;       // Optional. A reaction to a message was changed by a user. The bot must be an administrator in the chat and must explicitly specify "message_reaction" in the list of allowed_updates to receive these updates. The update isn't received for reactions set by bots.
-    optional_t<message_reaction_count_updated_t> message_reaction_count; // Optional. Reactions to a message with anonymous reactions were changed. The bot must be an administrator in the chat and must explicitly specify "message_reaction_count" in the list of allowed_updates to receive these updates. The updates are grouped and can be sent with delay up to a few minutes.
-    optional_t<inline_query_t>                   inline_query;           // Optional. New incoming inline query
-    optional_t<chosen_inline_result_t>           chosen_inline_result;   // Optional. The result of an inline query that was chosen by a user and sent to their chat partner. Please see our documentation on the feedback collecting for details on how to enable these updates for your bot.
-    optional_t<callback_query_t>                 callback_query;         // Optional. New incoming callback query
-    optional_t<shipping_query_t>                 shipping_query;         // Optional. New incoming shipping query. Only for invoices with flexible price
-    optional_t<pre_checkout_query_t>             pre_checkout_query;     // Optional. New incoming pre-checkout query. Contains full information about checkout
-    optional_t<poll_t>                           poll;                   // Optional. New poll state. Bots receive only updates about manually stopped polls and polls, which are sent by the bot
-    optional_t<poll_answer_t>                    poll_answer;            // Optional. A user changed their answer in a non-anonymous poll. Bots receive new votes only in polls that were sent by the bot itself.
-    optional_t<chat_member_updated_t>            my_chat_member;         // Optional. The bot's chat member status was updated in a chat. For private chats, this update is received only when the bot is blocked or unblocked by the user.
-    optional_t<chat_member_updated_t>            chat_member;            // Optional. A chat member's status was updated in a chat. The bot must be an administrator in the chat and must explicitly specify "chat_member" in the list of allowed_updates to receive these updates.
-    optional_t<chat_join_request_t>              chat_join_request;      // Optional. A request to join the chat has been sent. The bot must have the can_invite_users administrator right in the chat to receive these updates.
-    optional_t<chat_boost_updated_t>             chat_boost;             // Optional. A chat boost was added or changed. The bot must be an administrator in the chat to receive these updates.
-    optional_t<chat_boost_removed_t>             removed_chat_boost;     // Optional. A boost was removed from a chat. The bot must be an administrator in the chat to receive these updates.
-};
-
-// This object contains information about the users whose identifiers were shared with the bot using a KeyboardButtonRequestUsers button.
-struct users_shared_t {
-    integer_t          request_id; // Identifier of the request
-    array_t<integer_t> user_ids;   // Identifiers of the shared users. These numbers may have more than 32 significant bits and some programming languages may have difficulty/silent defects in interpreting them. But they have at most 52 significant bits, so 64-bit integers or double-precision float types are safe for storing these identifiers. The bot may not have access to the users and could be unable to use these identifiers, unless the users are already known to the bot by some other means.
+    integer_t                                    update_id;                 // The update's unique identifier. Update identifiers start from a certain positive number and increase sequentially. This identifier becomes especially handy if you're using webhooks, since it allows you to ignore repeated updates or to restore the correct update sequence, should they get out of order. If there are no new updates for at least a week, then identifier of the next update will be chosen randomly instead of sequentially.
+    optional_t<message_t>                        message;                   // Optional. New incoming message of any kind - text, photo, sticker, etc.
+    optional_t<message_t>                        edited_message;            // Optional. New version of a message that is known to the bot and was edited. This update may at times be triggered by changes to message fields that are either unavailable or not actively used by your bot.
+    optional_t<message_t>                        channel_post;              // Optional. New incoming channel post of any kind - text, photo, sticker, etc.
+    optional_t<message_t>                        edited_channel_post;       // Optional. New version of a channel post that is known to the bot and was edited. This update may at times be triggered by changes to message fields that are either unavailable or not actively used by your bot.
+    optional_t<business_connection_t>            business_connection;       // Optional. The bot was connected to or disconnected from a business account, or a user edited an existing connection with the bot
+    optional_t<message_t>                        business_message;          // Optional. New non-service message from a connected business account
+    optional_t<message_t>                        edited_business_message;   // Optional. New version of a message from a connected business account
+    optional_t<business_messages_deleted_t>      deleted_business_messages; // Optional. Messages were deleted from a connected business account
+    optional_t<message_reaction_updated_t>       message_reaction;          // Optional. A reaction to a message was changed by a user. The bot must be an administrator in the chat and must explicitly specify "message_reaction" in the list of allowed_updates to receive these updates. The update isn't received for reactions set by bots.
+    optional_t<message_reaction_count_updated_t> message_reaction_count;    // Optional. Reactions to a message with anonymous reactions were changed. The bot must be an administrator in the chat and must explicitly specify "message_reaction_count" in the list of allowed_updates to receive these updates. The updates are grouped and can be sent with delay up to a few minutes.
+    optional_t<inline_query_t>                   inline_query;              // Optional. New incoming inline query
+    optional_t<chosen_inline_result_t>           chosen_inline_result;      // Optional. The result of an inline query that was chosen by a user and sent to their chat partner. Please see our documentation on the feedback collecting for details on how to enable these updates for your bot.
+    optional_t<callback_query_t>                 callback_query;            // Optional. New incoming callback query
+    optional_t<shipping_query_t>                 shipping_query;            // Optional. New incoming shipping query. Only for invoices with flexible price
+    optional_t<pre_checkout_query_t>             pre_checkout_query;        // Optional. New incoming pre-checkout query. Contains full information about checkout
+    optional_t<poll_t>                           poll;                      // Optional. New poll state. Bots receive only updates about manually stopped polls and polls, which are sent by the bot
+    optional_t<poll_answer_t>                    poll_answer;               // Optional. A user changed their answer in a non-anonymous poll. Bots receive new votes only in polls that were sent by the bot itself.
+    optional_t<chat_member_updated_t>            my_chat_member;            // Optional. The bot's chat member status was updated in a chat. For private chats, this update is received only when the bot is blocked or unblocked by the user.
+    optional_t<chat_member_updated_t>            chat_member;               // Optional. A chat member's status was updated in a chat. The bot must be an administrator in the chat and must explicitly specify "chat_member" in the list of allowed_updates to receive these updates.
+    optional_t<chat_join_request_t>              chat_join_request;         // Optional. A request to join the chat has been sent. The bot must have the can_invite_users administrator right in the chat to receive these updates.
+    optional_t<chat_boost_updated_t>             chat_boost;                // Optional. A chat boost was added or changed. The bot must be an administrator in the chat to receive these updates.
+    optional_t<chat_boost_removed_t>             removed_chat_boost;        // Optional. A boost was removed from a chat. The bot must be an administrator in the chat to receive these updates.
 };
 
 // This object represents a service message about a video chat ended in the chat.
@@ -477,6 +485,33 @@ struct write_access_allowed_t {
 
 /// Types with dependencies
 
+// This object represents a point on the map.
+struct location_t {
+    float_t               latitude;               // Latitude as defined by sender
+    float_t               longitude;              // Longitude as defined by sender
+    optional_t<float_t>   horizontal_accuracy;    // Optional. The radius of uncertainty for the location, measured in meters; 0-1500
+    optional_t<integer_t> live_period;            // Optional. Time relative to the message sending date, during which the location can be updated; in seconds. For active live locations only.
+    optional_t<integer_t> heading;                // Optional. The direction in which user is moving, in degrees; 1-360. For active live locations only.
+    optional_t<integer_t> proximity_alert_radius; // Optional. The maximum distance for proximity alerts about approaching another chat member, in meters. For sent live locations only.
+};
+
+// Represents a location to which a chat is connected.
+struct birthdate_t {
+    location_t location; // The location to which the supergroup is connected. Can't be a live location.
+    string_t   address;  // Location address; 1-64 characters, as defined by the chat owner
+};
+
+// This object represents a venue.
+struct venue_t {
+    location_t           location;          // Venue location. Can't be a live location
+    string_t             title;             // Name of the venue
+    string_t             address;           // Address of the venue
+    optional_t<string_t> foursquare_id;     // Optional. Foursquare identifier of the venue
+    optional_t<string_t> foursquare_type;   // Optional. Foursquare type of the venue. (For example, “arts_entertainment/default”, “arts_entertainment/aquarium” or “food/icecream”.)
+    optional_t<string_t> google_place_id;   // Optional. Google Places identifier of the venue
+    optional_t<string_t> google_place_type; // Optional. Google Places type of the venue. (See supported types.)
+};
+
 // Represents the scope of bot commands, covering all group and supergroup chat administrators.
 struct bot_command_scope_all_chat_administrators_t {
     string_t type; // Scope type, must be all_chat_administrators
@@ -527,6 +562,11 @@ struct chat_t {
     optional_t<boolean_t>                is_forum;                                // Optional. True, if the supergroup chat is a forum (has topics enabled)
     optional_t<chat_photo_t>             photo;                                   // Optional. Chat photo. Returned only in getChat.
     optional_t<array_t<string_t>>        active_usernames;                        // Optional. If non-empty, the list of all active chat usernames; for private chats, supergroups and channels. Returned only in getChat.
+    optional_t<birthdate_t>              birthdate;                               // Optional. For private chats, the date of birth of the user. Returned only in getChat.
+    optional_t<business_intro_t>         business_intro;                          // Optional. For private chats with business accounts, the intro of the business. Returned only in getChat.
+    optional_t<business_location_t>      business_location;                       // Optional. For private chats with business accounts, the location of the business. Returned only in getChat.
+    optional_t<business_opening_hours_t> business_opening_hours;                  // Optional. For private chats with business accounts, the opening hours of the business. Returned only in getChat.
+    optional_t<chat_t>                   personal_chat;                           // Optional. For private chats, the personal channel of the user. Returned only in getChat.
     optional_t<array_t<reaction_type_t>> available_reactions;                     // Optional. List of available reactions allowed in the chat. If omitted, then all emoji reactions are allowed. Returned only in getChat.
     optional_t<integer_t>                accent_color_id;                         // Optional. Identifier of the accent color for the chat name and backgrounds of the chat photo, reply header, and link preview. See accent colors for more details. Returned only in getChat. Always returned in getChat.
     optional_t<string_t>                 background_custom_emoji_id;              // Optional. Custom emoji identifier of emoji chosen by the chat for the reply header and link preview background. Returned only in getChat.
@@ -555,6 +595,13 @@ struct chat_t {
     optional_t<string_t>                 custom_emoji_sticker_set_name;           // Optional. For supergroups, the name of the group's custom emoji sticker set. Custom emoji from this set can be used by all users and bots in the group. Returned only in getChat.
     optional_t<integer_t>                linked_chat_id;                          // Optional. Unique identifier for the linked chat, i.e. the discussion group identifier for a channel and vice versa; for supergroups and channel chats. This identifier may be greater than 32 bits and some programming languages may have difficulty/silent defects in interpreting it. But it is smaller than 52 bits, so a signed 64 bit integer or double-precision float type are safe for storing this identifier. Returned only in getChat.
     optional_t<chat_location_t>          location;                                // Optional. For supergroups, the location to which the supergroup is connected. Returned only in getChat.
+};
+
+// This object is received when messages are deleted from a connected business account.
+struct business_messages_deleted_t {
+    string_t           business_connection_id; // Unique identifier of the business connection
+    chat_t             chat;                   // Information about a chat in the business account. The bot may not have access to the chat or the corresponding user.
+    array_t<integer_t> message_ids;            // A JSON-serialized list of identifiers of deleted messages in the chat of the business account
 };
 
 // The boost was obtained by the creation of a Telegram Premium giveaway. This boosts the chat 4 times for the duration of the corresponding Telegram Premium subscription.
@@ -591,7 +638,9 @@ struct message_t {
     optional_t<user_t>                              from;                              // Optional. Sender of the message; empty for messages sent to channels. For backward compatibility, the field contains a fake sender user in non-channel chats, if the message was sent on behalf of a chat.
     optional_t<chat_t>                              sender_chat;                       // Optional. Sender of the message, sent on behalf of a chat. For example, the channel itself for channel posts, the supergroup itself for messages from anonymous group administrators, the linked channel for messages automatically forwarded to the discussion group. For backward compatibility, the field from contains a fake sender user in non-channel chats, if the message was sent on behalf of a chat.
     optional_t<integer_t>                           sender_boost_count;                // Optional. If the sender of the message boosted the chat, the number of boosts added by the user
+    optional_t<user_t>                              sender_business_bot;               // Optional. The bot that actually sent the message on behalf of the business account. Available only for outgoing messages sent on behalf of the connected business account.
     integer_t                                       date;                              // Date the message was sent in Unix time. It is always a positive number, representing a valid date.
+    optional_t<string_t>                            business_connection_id;            // Optional. Unique identifier of the business connection from which the message was received. If non-empty, the message belongs to a chat of the corresponding business account that is independent from any potential bot chat which might share the same identifier.
     chat_t                                          chat;                              // Chat the message belongs to
     optional_t<message_origin_t>                    forward_origin;                    // Optional. Information about the original message for forwarded messages
     optional_t<boolean_t>                           is_topic_message;                  // Optional. True, if the message is sent to a forum topic
@@ -603,6 +652,7 @@ struct message_t {
     optional_t<user_t>                              via_bot;                           // Optional. Bot through which the message was sent
     optional_t<integer_t>                           edit_date;                         // Optional. Date the message was last edited in Unix time
     optional_t<boolean_t>                           has_protected_content;             // Optional. True, if the message can't be forwarded
+    optional_t<boolean_t>                           is_from_offline;                   // Optional. True, if the message was sent by an implicit action, for example, as an away or a greeting business message, or as a scheduled message
     optional_t<string_t>                            media_group_id;                    // Optional. The unique identifier of a media message group this message belongs to
     optional_t<string_t>                            author_signature;                  // Optional. Signature of the post author for messages in channels, or the custom title of an anonymous group administrator
     optional_t<string_t>                            text;                              // Optional. For text messages, the actual UTF-8 text of the message
@@ -755,6 +805,17 @@ struct user_t {
     optional_t<boolean_t> can_join_groups;             // Optional. True, if the bot can be invited to groups. Returned only in getMe.
     optional_t<boolean_t> can_read_all_group_messages; // Optional. True, if privacy mode is disabled for the bot. Returned only in getMe.
     optional_t<boolean_t> supports_inline_queries;     // Optional. True, if the bot supports inline queries. Returned only in getMe.
+    optional_t<boolean_t> can_connect_to_business;     // Optional. True, if the bot can be connected to a Telegram Business account to receive its messages. Returned only in getMe.
+};
+
+// Describes the connection of the bot with a business account.
+struct business_connection_t {
+    string_t  id;           // Unique identifier of the business connection
+    user_t    user;         // Business account user that created the business connection
+    integer_t user_chat_id; // Identifier of a private chat with the user who created the business connection. This number may have more than 32 significant bits and some programming languages may have difficulty/silent defects in interpreting it. But it has at most 52 significant bits, so a 64-bit integer or double-precision float type are safe for storing this identifier.
+    integer_t date;         // Date the connection was established in Unix time
+    boolean_t can_reply;    // True, if the bot can act on behalf of the business account in chats that were active in the last 24 hours
+    boolean_t is_enabled;   // True, if the connection is active
 };
 
 // This object represents an incoming callback query from a callback button in an inline keyboard. If the button that originated the query was attached to a message sent by the bot, the field message will be present. If the button was attached to a message sent via the bot (in inline mode), the field inline_message_id will be present. Exactly one of the fields data or game_short_name will be present.
@@ -1017,33 +1078,6 @@ struct user_chat_boosts_t {
 // This object represents a service message about new members invited to a video chat.
 struct video_chat_participants_invited_t {
     array_t<user_t> users; // New members that were invited to the video chat
-};
-
-// This object represents a point on the map.
-struct location_t {
-    float_t               latitude;               // Latitude as defined by sender
-    float_t               longitude;              // Longitude as defined by sender
-    optional_t<float_t>   horizontal_accuracy;    // Optional. The radius of uncertainty for the location, measured in meters; 0-1500
-    optional_t<integer_t> live_period;            // Optional. Time relative to the message sending date, during which the location can be updated; in seconds. For active live locations only.
-    optional_t<integer_t> heading;                // Optional. The direction in which user is moving, in degrees; 1-360. For active live locations only.
-    optional_t<integer_t> proximity_alert_radius; // Optional. The maximum distance for proximity alerts about approaching another chat member, in meters. For sent live locations only.
-};
-
-// Represents a location to which a chat is connected.
-struct chat_location_t {
-    location_t location; // The location to which the supergroup is connected. Can't be a live location.
-    string_t   address;  // Location address; 1-64 characters, as defined by the chat owner
-};
-
-// This object represents a venue.
-struct venue_t {
-    location_t           location;          // Venue location. Can't be a live location
-    string_t             title;             // Name of the venue
-    string_t             address;           // Address of the venue
-    optional_t<string_t> foursquare_id;     // Optional. Foursquare identifier of the venue
-    optional_t<string_t> foursquare_type;   // Optional. Foursquare type of the venue. (For example, “arts_entertainment/default”, “arts_entertainment/aquarium” or “food/icecream”.)
-    optional_t<string_t> google_place_id;   // Optional. Google Places identifier of the venue
-    optional_t<string_t> google_place_type; // Optional. Google Places type of the venue. (See supported types.)
 };
 
 // This object represents one size of a photo or a file / sticker thumbnail.
@@ -1714,9 +1748,22 @@ struct sticker_set_t {
     string_t                 name;         // Sticker set name
     string_t                 title;        // Sticker set title
     string_t                 sticker_type; // Type of stickers in the set, currently one of “regular”, “mask”, “custom_emoji”
-    boolean_t                is_animated;  // True, if the sticker set contains animated stickers
-    boolean_t                is_video;     // True, if the sticker set contains video stickers
     array_t<sticker_t>       stickers;     // List of all set stickers
     optional_t<photo_size_t> thumbnail;    // Optional. Sticker set thumbnail in the .WEBP, .TGS, or .WEBM format
+};
+
+// This object contains information about a user that was shared with the bot using a KeyboardButtonRequestUser button.
+struct shared_user_t {
+    integer_t                         user_id;    // Identifier of the shared user. This number may have more than 32 significant bits and some programming languages may have difficulty/silent defects in interpreting it. But it has at most 52 significant bits, so 64-bit integers or double-precision float types are safe for storing these identifiers. The bot may not have access to the user and could be unable to use this identifier, unless the user is already known to the bot by some other means.
+    optional_t<string_t>              first_name; // Optional. First name of the user, if the name was requested by the bot
+    optional_t<string_t>              last_name;  // Optional. Last name of the user, if the name was requested by the bot
+    optional_t<string_t>              username;   // Optional. Username of the user, if the username was requested by the bot
+    optional_t<array_t<photo_size_t>> photo;      // Optional. Available sizes of the chat photo, if the photo was requested by the bot
+};
+
+// This object contains information about the users whose identifiers were shared with the bot using a KeyboardButtonRequestUsers button.
+struct users_shared_t {
+    integer_t              request_id; // Identifier of the request
+    array_t<shared_user_t> users;      // Information about users shared with the bot.
 };
 

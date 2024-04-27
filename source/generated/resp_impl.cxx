@@ -1,6 +1,7 @@
 template struct response_handler<api::bot_description_t>;
 template struct response_handler<api::bot_name_t>;
 template struct response_handler<api::bot_short_description_t>;
+template struct response_handler<api::business_connection_t>;
 template struct response_handler<api::chat_administrator_rights_t>;
 template struct response_handler<api::chat_invite_link_t>;
 template struct response_handler<api::chat_member_t>;

@@ -545,6 +545,20 @@ struct detail::by_request_type_impl<api::forward_messages_args_t> {
 };
 
 template <>
+struct api_traits<api::method::get_business_connection> {
+    static inline constexpr std::string_view native_name = "getBusinessConnection";
+    static inline constexpr std::string_view pretty_name = "get_business_connection";
+
+    using request_type  = api::get_business_connection_args_t;
+    using response_type = api::business_connection_t;
+};
+
+template <>
+struct detail::by_request_type_impl<api::get_business_connection_args_t> {
+    using type = api_traits<api::method::get_business_connection>;
+};
+
+template <>
 struct api_traits<api::method::get_chat> {
     static inline constexpr std::string_view native_name = "getChat";
     static inline constexpr std::string_view pretty_name = "get_chat";
@@ -920,6 +934,20 @@ struct api_traits<api::method::reopen_general_forum_topic> {
 template <>
 struct detail::by_request_type_impl<api::reopen_general_forum_topic_args_t> {
     using type = api_traits<api::method::reopen_general_forum_topic>;
+};
+
+template <>
+struct api_traits<api::method::replace_sticker_in_set> {
+    static inline constexpr std::string_view native_name = "replaceStickerInSet";
+    static inline constexpr std::string_view pretty_name = "replace_sticker_in_set";
+
+    using request_type  = api::replace_sticker_in_set_args_t;
+    using response_type = boolean_t;
+};
+
+template <>
+struct detail::by_request_type_impl<api::replace_sticker_in_set_args_t> {
+    using type = api_traits<api::method::replace_sticker_in_set>;
 };
 
 template <>
